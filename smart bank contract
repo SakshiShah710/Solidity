@@ -1,0 +1,37 @@
+pragma solidity >=0.7.0 <0.9.0;
+
+contract bankAccount {
+    uint totalBalance = 0; //totalBalance initialized by 0
+    function getBalance() public view returns(uint) { 
+        return totalBalance;
+    }
+
+    mapping(address => uint) balances; //mapping for balance (address to unit)
+    mapping(address => uint) depositTimestamps; //mapping for timestamps for deposit (address to uint)
+
+    function addBalance() public payable { //which is basically DEPOSITING ethers
+        balances[msg.sender] = msg.value;
+        totalBalance = totalBalance + msg.value;
+        depositTimestamps[msg.sender] = block.timestamp;
+    }
+
+    function getBalance(address userAddress) public view returns (uint) { //to get the balance from the user address
+        uint principal = balances[userAddress];
+        uint timeElapsed = block.timestamp - depositTimestamps[userAddress];
+        return principal + uint((principal*7*timeElapsed)/(100*365*24*60*60))+1;
+        //this will return the principal amount wherein the annual intrest rate of 0.07% is added
+        //+1 is to atleast get some amount of interest even when we get the value as 0 seconds
+    }
+
+    function withdraw() public payable { //to withdraw the ethers
+        address payable withdrawTo = payable(msg.sender);
+        uint amountToTransfer = getBalance(msg.sender); //this transfers the ethers
+        withdrawTo.transfer(amountToTransfer);
+        totalBalance = totalBalance - amountToTransfer;
+        balances[msg.sender] = 0;
+    }
+
+    function addMoneyToContract() public payable {
+        totalBalance += msg.value; //this will update the last totalBalance after all the function
+    }
+}
